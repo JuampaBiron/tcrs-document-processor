@@ -41,7 +41,7 @@ async def process_documents(req: func.HttpRequest) -> func.HttpResponse:
             if not raw_body:
                 raise ValueError("Request body is empty")
 
-            request_data = DocumentProcessingRequest.parse_raw(raw_body)
+            request_data = DocumentProcessingRequest.model_validate_json(raw_body)
             request_id = request_data.requestId
 
             # Get contextual logger with request ID

@@ -1,8 +1,12 @@
 import io
 import logging
+import warnings
 from PIL import Image, ImageDraw, ImageFont
 import fitz  # PyMuPDF for PDF to image conversion
 from typing import List
+
+# Suppress PIL decompression bomb warnings for legitimate large documents
+warnings.filterwarnings("ignore", ".*DecompressionBombWarning.*")
 
 
 class TIFFConverter:
@@ -35,17 +39,41 @@ class TIFFConverter:
                 raise ValueError("No images provided for TIFF conversion")
             combined = self.combine_images_vertically(images)
             output_buffer = io.BytesIO()
-            combined.save(
-                output_buffer,
-                format="TIFF",
-                compression=self.compression,
-                dpi=(self.dpi, self.dpi)
-            )
+            # Save with optimized settings
+            save_kwargs = {
+                "format": "TIFF",
+                "compression": self.compression,
+                "dpi": (self.dpi, self.dpi)
+            }
+
+            # Add JPEG quality if using JPEG compression
+            if self.compression == "jpeg":
+                save_kwargs["quality"] = self.jpeg_quality
+
+            combined.save(output_buffer, **save_kwargs)
             output_buffer.seek(0)
-            return output_buffer.getvalue()
+            tiff_data = output_buffer.getvalue()
+
+            # Log TIFF size for optimization tracking
+            logging.info(f"Generated TIFF: {len(tiff_data)/1024/1024:.2f} MB (DPI: {self.dpi}, compression: {self.compression})")
+
+            return tiff_data
         except Exception as e:
             logging.error(f"Error creating single-page TIFF from images: {str(e)}")
             raise Exception(f"Failed to create single-page TIFF: {str(e)}")
+
+    def images_to_tiff(self, images: List[Image.Image]) -> bytes:
+        """Convert multiple images to a multi-page TIFF or single-page TIFF (combined)"""
+        try:
+            if not images:
+                raise ValueError("No images provided for TIFF conversion")
+
+            # For now, use single-page TIFF approach (all pages combined)
+            return self.images_to_singlepage_tiff(images)
+
+        except Exception as e:
+            logging.error(f"Error converting images to TIFF: {str(e)}")
+            raise Exception(f"Failed to convert images to TIFF: {str(e)}")
 
     def convert_pdf_to_singlepage_tiff(self, pdf_data: bytes) -> bytes:
         """Convierte un PDF a un TIFF de una sola página con todas las páginas apiladas"""
@@ -65,8 +93,10 @@ class TIFFConverter:
     """Convert PDF documents to TIFF images with high quality settings"""
 
     def __init__(self):
-        self.dpi = 100  # Image quality
-        self.compression = "lzw"  # LZW compression for size optimization
+        self.dpi = 120  # Further reduced DPI for very large documents
+        self.compression = "jpeg"  # JPEG compression for much smaller files
+        self.jpeg_quality = 80  # Balanced quality for large files
+        self.max_image_width = 2000  # Maximum width to prevent huge images
 
     def pdf_to_images(self, pdf_data: bytes) -> List[Image.Image]:
         """Convert ALL PDF pages to PIL Images"""
@@ -97,6 +127,13 @@ class TIFFConverter:
                 if pil_image.mode != 'RGB':
                     logging.info(f"Converting page {page_num + 1} from {pil_image.mode} to RGB")
                     pil_image = pil_image.convert('RGB')
+
+                # Resize if image is too wide to prevent memory issues
+                if pil_image.width > self.max_image_width:
+                    ratio = self.max_image_width / pil_image.width
+                    new_height = int(pil_image.height * ratio)
+                    pil_image = pil_image.resize((self.max_image_width, new_height), Image.Resampling.LANCZOS)
+                    logging.info(f"Resized page {page_num + 1} to {pil_image.size[0]}x{pil_image.size[1]} to prevent memory issues")
 
                 images.append(pil_image)
                 logging.info(f"✅ Converted PDF page {page_num + 1} to image ({pil_image.size[0]}x{pil_image.size[1]}, mode: {pil_image.mode})")

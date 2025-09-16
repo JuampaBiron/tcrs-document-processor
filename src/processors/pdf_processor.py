@@ -7,16 +7,23 @@ from reportlab.lib.pagesizes import letter
 from datetime import datetime
 from typing import List
 from src.models.request_models import CompleteRequestData, DocumentProcessingRequest, GLCodingEntry
+from src.storage.blob_client import BlobStorageClient
 
 
 class PDFProcessor:
     """PDF processing for invoice merge and signature generation"""
 
     async def download_pdf(self, pdf_url: str) -> bytes:
-        """Download PDF from Azure Blob Storage"""
+        """Download PDF from Azure Blob Storage using SAS URL for authentication"""
         try:
+            # Generate SAS URL for authenticated access to existing blob
+            blob_client = BlobStorageClient()
+            sas_url = blob_client.generate_sas_url_for_existing_blob(pdf_url)
+
+            logging.info(f"Generated SAS URL for PDF download")
+
             async with aiohttp.ClientSession() as session:
-                async with session.get(pdf_url) as response:
+                async with session.get(sas_url) as response:
                     if response.status != 200:
                         raise Exception(f"Failed to download PDF: HTTP {response.status}")
 

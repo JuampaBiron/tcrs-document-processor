@@ -11,7 +11,7 @@ class GLCodingEntry(BaseModel):
     facilityDescription: str = Field(..., min_length=1, max_length=100)  # From facilities master table
     taxCode: str = Field(..., min_length=1, max_length=10)
     amount: float = Field(..., gt=0)
-    equipment: Optional[str] = Field(None, max_length=50)
+    equipment: Optional[str] = Field(None, max_length=200)
     comments: Optional[str] = Field(None, max_length=200)
 
 
