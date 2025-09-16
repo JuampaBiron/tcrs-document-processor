@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=your_storage_account;AccountKey=your_key;EndpointSuffix=core.windows.net",
+    "BLOB_CONTAINER_NAME": "tcrs-documents",
+    "TCRS_API_BASE_URL": "https://tcrscoded.azurewebsites.net",
+    "INTERNAL_FUNCTION_KEY": "your_internal_function_key",
+    "ALLOWED_ORIGINS": "https://tcrscoded.azurewebsites.net,http://localhost:3000",
+    "LOG_LEVEL": "INFO"
+  }
+}

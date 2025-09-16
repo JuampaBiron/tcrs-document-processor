@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+env/
+env311/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Azure Functions
+local.settings.json
+.azure/
+.vscode/
+bin/
+obj/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test files
+test-request.json
+*.tmp
+*.temp
+
+# Azure Storage Emulator
+UseDevelopmentStorage=true
+
+# Secrets and keys
+*.key
+*.pem
+secrets.txt
+.env
