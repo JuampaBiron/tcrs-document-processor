@@ -33,7 +33,7 @@ venv.bak/
 # Azure Functions
 local.settings.json
 .azure/
-.vscode/
+
 bin/
 obj/
 
@@ -69,3 +69,4 @@ UseDevelopmentStorage=true
 *.pem
 secrets.txt
 .env
+.python_packages
