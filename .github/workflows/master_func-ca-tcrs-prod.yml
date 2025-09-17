@@ -34,16 +34,16 @@ jobs:
           python -m venv venv
           source venv/bin/activate
 
-      - name: Install dependencies
+      - name: Install dependencies into project directory
         run: |
           source venv/bin/activate
-          pip install -r requirements.txt
+          pip install -r requirements.txt -t .
 
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
         run: |
-          zip release.zip ./* -r --exclude=venv/* --exclude=.git/* --exclude=env/* --exclude=env311/* --exclude=local_output/* --exclude=__pycache__/*
+          zip release.zip ./* -r --exclude=venv/* --exclude=.git/* --exclude=env/* --exclude=env311/* --exclude=local_output/* --exclude=__pycache__/* --exclude=*.pyc --exclude=.pytest_cache/*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -79,6 +79,4 @@ jobs:
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_EE89A12129D44B6AAEF202F587B565DC }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
         
