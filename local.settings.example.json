@@ -3,11 +3,23 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "python",
-    "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=your_storage_account;AccountKey=your_key;EndpointSuffix=core.windows.net",
-    "BLOB_CONTAINER_NAME": "tcrs-documents",
-    "TCRS_API_BASE_URL": "https://tcrscoded.azurewebsites.net",
-    "INTERNAL_FUNCTION_KEY": "your_internal_function_key",
-    "ALLOWED_ORIGINS": "https://tcrscoded.azurewebsites.net,http://localhost:3000",
-    "LOG_LEVEL": "INFO"
-  }
+    "AZURE_STORAGE_CONNECTION_STRING": "your_azure_storage_connection_string_here",
+    "AZURE_STORAGE_ACCOUNT_NAME": "your_azure_storage_account_name_here",
+    "AZURE_STORAGE_ACCOUNT_KEY": "your_azure_storage_account_key_here",
+    "BLOB_CONTAINER_NAME": "your_blob_container_name_here",
+    "TCRS_API_BASE_URL": "http://localhost:3000",
+    "INTERNAL_FUNCTION_KEY": "your_internal_function_key_here",
+    "ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:8000",
+    "CORS_ORIGINS": "http://localhost:3000",
+    "LOG_LEVEL": "DEBUG",
+    "TESTING_MODE": "true",
+    "SAVE_LOCAL_COPIES": "true",
+    "SAS_EXPIRY_HOURS": "1"
+  },
+    "Host": {
+      "CORS": "http://localhost:3000",
+      "CORSCredentials": false
+    }
+  
 }
+

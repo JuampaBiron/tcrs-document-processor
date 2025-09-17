@@ -14,7 +14,7 @@ class BlobStorageClient:
         self.connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
         self.account_name = os.environ.get("AZURE_STORAGE_ACCOUNT_NAME")
         self.account_key = os.environ.get("AZURE_STORAGE_ACCOUNT_KEY")
-        self.container_name = os.environ.get("BLOB_CONTAINER_NAME", "tcrs-documents")
+        self.container_name = os.environ.get("BLOB_CONTAINER_NAME", "invoices")
 
         if not self.connection_string:
             raise ValueError("AZURE_STORAGE_CONNECTION_STRING must be set")
@@ -36,12 +36,13 @@ class BlobStorageClient:
                 blob=file_name
             )
 
-            # Upload with content settings and extended timeout
+            # Upload with content settings and configurable timeout
+            timeout_seconds = int(os.environ.get("BLOB_UPLOAD_TIMEOUT_SECONDS", "300"))
             blob_client.upload_blob(
                 data=file_data,
                 content_settings=ContentSettings(content_type=content_type),
                 overwrite=True,
-                timeout=300  # 5 minutes timeout for large files
+                timeout=timeout_seconds
             )
 
             # Generate SAS URL with read permissions valid for 1 year
@@ -89,17 +90,21 @@ class BlobStorageClient:
 
         return f"{folder}{file_name}" if folder else file_name
 
-    def generate_sas_url(self, blob_name: str, expiry_hours: int = 8760) -> str:
+    def generate_sas_url(self, blob_name: str, expiry_hours: int = None) -> str:
         """Generate SAS URL for blob with read permissions
 
         Args:
             blob_name: Name of the blob
-            expiry_hours: Hours until SAS token expires (default: 1 year)
+            expiry_hours: Hours until SAS token expires (default: 1 hour)
 
         Returns:
             Full SAS URL for the blob
         """
         try:
+            # Use environment variable or default to 1 hour
+            if expiry_hours is None:
+                expiry_hours = int(os.environ.get("SAS_EXPIRY_HOURS", "1"))
+
             # Set expiry time
             expiry_time = datetime.utcnow() + timedelta(hours=expiry_hours)
 
@@ -116,7 +121,7 @@ class BlobStorageClient:
             # Construct full SAS URL
             sas_url = f"https://{self.account_name}.blob.core.windows.net/{self.container_name}/{blob_name}?{sas_token}"
 
-            logging.info(f"Generated SAS URL for {blob_name} (expires: {expiry_time})")
+            logging.info(f"Generated SAS URL for {blob_name} (expires in {expiry_hours}h: {expiry_time})")
             return sas_url
 
         except Exception as e:

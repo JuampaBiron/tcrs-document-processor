@@ -15,6 +15,9 @@ class PDFProcessor:
 
     async def download_pdf(self, pdf_url: str) -> bytes:
         """Download PDF from Azure Blob Storage using SAS URL for authentication"""
+        import time
+        start_time = time.time()
+
         try:
             # Generate SAS URL for authenticated access to existing blob
             blob_client = BlobStorageClient()
@@ -28,7 +31,8 @@ class PDFProcessor:
                         raise Exception(f"Failed to download PDF: HTTP {response.status}")
 
                     pdf_data = await response.read()
-                    logging.info(f"Successfully downloaded PDF from {pdf_url} ({len(pdf_data)} bytes)")
+                    download_time = time.time() - start_time
+                    logging.info(f"Successfully downloaded PDF from {pdf_url} ({len(pdf_data)} bytes) in {download_time:.2f}s")
                     return pdf_data
 
         except aiohttp.ClientError as e:

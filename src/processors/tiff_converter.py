@@ -100,6 +100,9 @@ class TIFFConverter:
 
     def pdf_to_images(self, pdf_data: bytes) -> List[Image.Image]:
         """Convert ALL PDF pages to PIL Images"""
+        import time
+        start_time = time.time()
+
         try:
             # Open PDF with PyMuPDF
             pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
@@ -139,7 +142,8 @@ class TIFFConverter:
                 logging.info(f"✅ Converted PDF page {page_num + 1} to image ({pil_image.size[0]}x{pil_image.size[1]}, mode: {pil_image.mode})")
 
             pdf_document.close()
-            logging.info(f"🎉 Successfully converted ALL {len(images)} PDF pages to images")
+            conversion_time = time.time() - start_time
+            logging.info(f"🎉 Successfully converted ALL {len(images)} PDF pages to images in {conversion_time:.2f}s")
             return images
 
         except Exception as e:
