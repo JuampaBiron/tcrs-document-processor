@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Checkout repository
@@ -34,43 +34,36 @@ jobs:
           python -m venv venv
           source venv/bin/activate
 
-      - name: Install dependencies into project directory
-        run: |
-          source venv/bin/activate
-          pip install -r requirements.txt -t .
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      # Opcional: Agregar paso para correr tests aquí
+      # Optional: Add step to run tests here
 
-      - name: Clean up unnecessary files before packaging
-        run: |
-          rm -rf venv/
-          rm -rf .git/
-          rm -rf env/
-          rm -rf env311/
-          rm -rf local_output/
-          find . -type d -name "__pycache__" -exec rm -rf {} +
-          find . -name "*.pyc" -delete
-          find . -type d -name ".pytest_cache" -exec rm -rf {} +
+      - name: Zip artifact for deployment
+        run: zip release.zip ./* -r
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: .
+          path: |
+            release.zip
+            !venv/
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-function.outputs.webapp-url }}
-
+    
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: python-app
-          path: .
+
+      - name: Unzip artifact for deployment
+        run: |
+          unzip release.zip
+          rm release.zip
         
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
@@ -79,6 +72,6 @@ jobs:
           app-name: 'func-ca-tcrs-prod'
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_EE89A12129D44B6AAEF202F587B565DC }}
-          # Desactivar Oryx para usar deployment tradicional
-          enable-oryx-build: false
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C7607DBECABD4B048E439FCF9BE4FA5B }}
+          sku: 'flexconsumption'
+        
