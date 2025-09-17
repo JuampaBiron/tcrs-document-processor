@@ -34,26 +34,57 @@ jobs:
           python -m venv venv
           source venv/bin/activate
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install dependencies into project directory
+        run: |
+          source venv/bin/activate
+          # Instalar dependencias en .python_packages/lib/site-packages (formato Azure Functions)
+          pip install -r requirements.txt --target .python_packages/lib/site-packages
 
       # Optional: Add step to run tests here
 
+      - name: Clean up before packaging
+        run: |
+          # Eliminar el virtual environment y otros archivos innecesarios
+          rm -rf venv/
+          rm -rf .git/
+          rm -rf env/
+          rm -rf env311/
+          rm -rf local_output/
+          rm -rf .github/
+          # Limpiar archivos de Python cache
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.pyc" -delete
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+
+      - name: List files before zipping (debug)
+        run: |
+          echo "Files to be included in deployment:"
+          ls -la
+          echo "Checking for function_app.py:"
+          ls -la function_app.py || echo "function_app.py not found!"
+          echo "Checking src directory:"
+          ls -la src/ || echo "src directory not found!"
+          echo "Checking .python_packages:"
+          ls -la .python_packages/lib/site-packages/ | head -10 || echo ".python_packages not found!"
+
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          # Crear el ZIP excluyendo explícitamente directorios problemáticos
+          zip -r release.zip . -x "venv/*" ".git/*" "env/*" "env311/*" "local_output/*" ".github/*" "*.pyc" "__pycache__/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-function.outputs.webapp-url }}
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -64,7 +95,18 @@ jobs:
         run: |
           unzip release.zip
           rm release.zip
-        
+
+      - name: List files after unzip (debug)
+        run: |
+          echo "Files after unzipping:"
+          ls -la
+          echo "Checking for function_app.py:"
+          ls -la function_app.py || echo "function_app.py missing!"
+          echo "Checking src directory:"
+          ls -la src/ || echo "src directory missing!"
+          echo "Checking dependencies:"
+          ls -la .python_packages/lib/site-packages/ | head -10 || echo "Dependencies missing!"
+
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
         id: deploy-to-function
@@ -73,5 +115,6 @@ jobs:
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C7607DBECABD4B048E439FCF9BE4FA5B }}
-          sku: 'flexconsumption'
-        
+          # Configuraciones específicas para Flex Consumption
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
