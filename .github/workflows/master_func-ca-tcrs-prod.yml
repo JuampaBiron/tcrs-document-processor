@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -39,19 +39,24 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt -t .
 
-      # Optional: Add step to run tests here
+      # Opcional: Agregar paso para correr tests aquí
 
-      - name: Zip artifact for deployment
+      - name: Clean up unnecessary files before packaging
         run: |
-          zip release.zip ./* -r --exclude=venv/* --exclude=.git/* --exclude=env/* --exclude=env311/* --exclude=local_output/* --exclude=__pycache__/* --exclude=*.pyc --exclude=.pytest_cache/*
+          rm -rf venv/
+          rm -rf .git/
+          rm -rf env/
+          rm -rf env311/
+          rm -rf local_output/
+          find . -type d -name "__pycache__" -exec rm -rf {} +
+          find . -name "*.pyc" -delete
+          find . -type d -name ".pytest_cache" -exec rm -rf {} +
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -65,11 +70,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
-
-      - name: Unzip artifact for deployment
-        run: |
-          unzip release.zip
-          rm release.zip
+          path: .
         
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
@@ -79,4 +80,5 @@ jobs:
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_EE89A12129D44B6AAEF202F587B565DC }}
-        
+          # Desactivar Oryx para usar deployment tradicional
+          enable-oryx-build: false
