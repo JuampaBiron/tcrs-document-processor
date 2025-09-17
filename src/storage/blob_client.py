@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 
 class BlobStorageClient:
-    """Azure Blob Storage client for document uploads"""
+    """Azure Blob Storage client for document uploadss"""
 
     def __init__(self):
         self.connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
