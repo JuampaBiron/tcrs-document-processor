@@ -35,12 +35,15 @@ jobs:
           source venv/bin/activate
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
 
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          zip release.zip ./* -r --exclude=venv/* --exclude=.git/* --exclude=env/* --exclude=env311/* --exclude=local_output/* --exclude=__pycache__/*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -53,7 +56,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-function.outputs.webapp-url }}
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -73,5 +79,6 @@ jobs:
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_EE89A12129D44B6AAEF202F587B565DC }}
-          sku: 'flexconsumption'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
         
